@@ -1,0 +1,5 @@
+homepage: "https://github.com/LukasFibiger/Ecomail-SGTM"
+documentation: "https://github.com/LukasFibiger/Ecomail-SGTM"
+versions:
+  - sha: 7333ca204a15c1d91f5bfaf6c4d4f2052769469f
+    changeNotes: Initial commit. I create the Template and tested.
