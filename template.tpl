@@ -14,7 +14,6 @@ ___INFO___
   "version": 1,
   "securityGroups": [],
   "displayName": "Ecomail",
-  "categories": ["EMAIL_MARKETING", "MARKETING"],  
   "brand": {
     "id": "brand_dummy",
     "displayName": "",
@@ -118,6 +117,12 @@ ___TEMPLATE_PARAMETERS___
         "type": "TEXT",
         "name": "user_phone",
         "displayName": "Phone number",
+        "simpleValueType": true
+      },
+      {
+        "type": "TEXT",
+        "name": "user_source",
+        "displayName": "Source of contact",
         "simpleValueType": true
       },
       {
@@ -261,11 +266,43 @@ ___TEMPLATE_PARAMETERS___
     ]
   },
   {
-    "type": "TEXT",
-    "name": "items",
-    "displayName": "Items (for transaction and cart)",
-    "simpleValueType": true,
-    "help": "I need array items in GA4 format"
+    "type": "GROUP",
+    "name": "Items",
+    "displayName": "Data for items",
+    "groupStyle": "ZIPPY_CLOSED",
+    "subParams": [
+      {
+        "type": "TEXT",
+        "name": "items",
+        "displayName": "Items (for transaction and cart)",
+        "simpleValueType": true,
+        "help": "I need array items in GA4 format"
+      },
+      {
+        "type": "TEXT",
+        "name": "items_price",
+        "displayName": "Object key with price of product",
+        "simpleValueType": true,
+        "defaultValue": "price"
+      }
+    ]
+  },
+  {
+    "type": "PARAM_TABLE",
+    "name": "params_to_tags",
+    "displayName": "Items params into tags/descriptions",
+    "paramTableColumns": [
+      {
+        "param": {
+          "type": "TEXT",
+          "name": "param_name",
+          "displayName": "Param name",
+          "simpleValueType": true
+        },
+        "isUnique": true
+      }
+    ],
+    "help": "In transactions join this params into param name tags. In event cart join this params into param name descriptions."
   },
   {
     "type": "GROUP",
@@ -292,23 +329,6 @@ ___TEMPLATE_PARAMETERS___
         "simpleValueType": true
       }
     ]
-  },
-  {
-    "type": "PARAM_TABLE",
-    "name": "params_to_tags",
-    "displayName": "Items params into tags/descriptions",
-    "paramTableColumns": [
-      {
-        "param": {
-          "type": "TEXT",
-          "name": "param_name",
-          "displayName": "Param name",
-          "simpleValueType": true
-        },
-        "isUnique": true
-      }
-    ],
-    "help": "In transactions join this params into param name tags. In event cart join this params into param name descriptions."
   }
 ]
 
@@ -323,11 +343,6 @@ const sendHttpRequest = require('sendHttpRequest');
 const getTimestamp = require('getTimestamp');
 const createRegex = require('createRegex');
 const testRegex = require('testRegex');
-
-logToConsole(JSON.stringify({
-  'Point': 'Ecomail input data',
-  'Input data': data
-}));
 
 //Check IF I have an email in input data. 
 const emailRegex = createRegex('@', 'i');
@@ -368,41 +383,32 @@ if (data.request_type == 'transaction') {
 
 //If I recognize than user wants event "Add to cart" I set value to special format for this situation. And I transform items from GA4 format to especialy format fro ecomail events.
 if (data.event_action == 'Basket' && data.event_label == 'Basket' && typeof data.items != 'undefined') {
-  
   var cart_event_value = { 
     data: {
       data: {
-        action: 'Basket'
+        action: 'Basket',
+        products: []
       }
     }
   };
-  
   data.items.forEach(function(produkt, index) {
-    var combinedCategories = [];
-    for (const key of categoryKeys) {
-      if (produkt[key]) {
-        combinedCategories.push(produkt[key]);
-      }
-    }
-    cart_event_value.data.data.action.products[index] = {
+    cart_event_value.data.data.products[index] = {
       'productId': produkt.item_id,
-      'img_url': produkt.img_url,
+      'img_url': produkt.image_url,
       'url': produkt.url,
       'name': produkt.item_name,
-      'price': produkt.price
+      'price': produkt[data.items_price]
     } ;
-
     //Add parameters to event name tags
     var product_params_to_description = [];
     if (typeof data.params_to_tags != 'undefined') {
-      data.product_params_to_descriptions.forEach(function(param_column, param_index) {
+      data.params_to_tags.forEach(function(param_column, param_index) {
         if (produkt[param_column.param_name]) {
           product_params_to_description[param_index] = produkt[param_column.param_name];
         }
       });
-      cart_event_value.data.data.action.products[index].description = product_params_to_description;
+      cart_event_value.data.data.products[index].description = product_params_to_description;
     }
-    
     
   });
   
@@ -424,7 +430,7 @@ if (data.request_type == 'transaction' && typeof data.items != 'undefined') {
       'code': produkt.item_id,
       'title': produkt.item_name,
       'category': combinedCategories.join(' | '),
-      'price': produkt.price,
+      'price': produkt[data.items_price],
       'amount': produkt.quantity
     } ;
     
@@ -443,14 +449,6 @@ if (data.request_type == 'transaction' && typeof data.items != 'undefined') {
   });
 }
 
-//if debug_mode On, write complete JSON to Console
-if (data.debugMode == true) {
-  logToConsole(JSON.stringify({
-    'Point': 'Ecomail - POST data',
-    'POST data': post_data
-  }));
-}
-
 //When I have use mock server
 if (data.mockServer == true) {
   var url_api = encodeUri(data.debug_server_url)+'/tracker/'+encodeUri(data.request_type);
@@ -463,8 +461,7 @@ if (data.mockServer == true) {
 
 //Add email contact to a list as new user
 if (data.email_list_id && (data.request_type == 'only_add_email' || (data.request_type == 'transaction' && data.add_new_email == true))) {
-logToConsole('K0');  
-  
+
   var post_data_subscribe = {   
     'subscriber_data': {
       "name": data.user_name,
@@ -475,12 +472,20 @@ logToConsole('K0');
       "zip": data.user_zip,
       "country": data.user_country,
       "phone": data.user_phone,
-      "source": "API",      
+      "zdroj": data.user_source,      
     },
       "trigger_autoresponders": data.trigger_autoresponders,
       "update_existing": data.update_existing,
       "resubscribe": data.resubscribe
   };
+
+  //if debug_mode On, write complete JSON to Console
+  if (data.debugMode == true) {
+    logToConsole(JSON.stringify({
+      'Point': 'Ecomail - POST data subscribe',
+      'POST data': post_data_subscribe
+    }));
+  }
 
   
 sendHttpRequest(url_api_subscribe, (statusCode, headers, body) => {
@@ -521,7 +526,16 @@ sendHttpRequest(url_api_subscribe, (statusCode, headers, body) => {
 
 //Send data to Ecomail about transaction or events
 if (data.request_type == 'transaction' || data.request_type == 'events') {
-logToConsole('K0.1');  
+
+  //if debug_mode On, write complete JSON to Console
+  if (data.debugMode == true) {
+    logToConsole(JSON.stringify({
+      'Point': 'Ecomail - POST data',
+      'POST data': post_data
+    }));
+  }
+  
+  
   sendHttpRequest(url_api, (statusCode, headers, body) => {
     if (statusCode >= 200 && statusCode < 300) {
       if (data.debugMode == true) {
@@ -532,7 +546,6 @@ logToConsole('K0.1');
           'ResponseBody': body
         }));
       }
-logToConsole('K4');    
       data.gtmOnSuccess();
     } else {
       if (data.debugMode == true) {
@@ -543,7 +556,6 @@ logToConsole('K4');
           'ResponseBody': body
         }));
       }
-logToConsole('K5');    
       data.gtmOnFailure(); 
     }},
     {
@@ -557,8 +569,6 @@ logToConsole('K5');
      JSON.stringify(post_data)
   );
 }
-
-logToConsole('K6');
 
 
 ___SERVER_PERMISSIONS___
@@ -616,6 +626,6 @@ scenarios: []
 
 ___NOTES___
 
-Created on 4. 12. 2023 18:10:45
+Created on 31. 3. 2024 22:37:44
 
 
