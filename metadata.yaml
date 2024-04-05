@@ -1,5 +1,5 @@
 homepage: "https://github.com/LukasFibiger/Ecomail-SGTM"
 documentation: "https://github.com/LukasFibiger/Ecomail-SGTM"
 versions:
-  - sha: 4dc62eb30858e5f085a0254b0753666882efe490
-    changeNotes: I add source params for users section.
+  - sha: f385989cc5350e2f243a992f7323a33b5ad00787
+    changeNotes: Fix name parameter source for users section.
