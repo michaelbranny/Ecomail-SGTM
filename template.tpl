@@ -472,7 +472,7 @@ if (data.email_list_id && (data.request_type == 'only_add_email' || (data.reques
       "zip": data.user_zip,
       "country": data.user_country,
       "phone": data.user_phone,
-      "zdroj": data.user_source,      
+      "source": data.user_source,      
     },
       "trigger_autoresponders": data.trigger_autoresponders,
       "update_existing": data.update_existing,
@@ -626,6 +626,6 @@ scenarios: []
 
 ___NOTES___
 
-Created on 31. 3. 2024 22:37:44
+Created on 5. 4. 2024 17:06:40
 
 
