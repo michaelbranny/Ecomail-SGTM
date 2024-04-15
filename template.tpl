@@ -449,35 +449,61 @@ if (data.request_type == 'transaction' && typeof data.items != 'undefined') {
   });
 }
 
-//When I have use mock server
-if (data.mockServer == true) {
-  var url_api = encodeUri(data.debug_server_url)+'/tracker/'+encodeUri(data.request_type);
-  var url_api_subscribe = encodeUri(data.debug_server_url)+'/lists/'+encodeUri(data.email_list_id)+'/subscribe';
+//SetUp method and URL to subscribers. 
+if (data.update_existing == true && data.add_new_email == false) {
+  var method = 'PUT';
+  var subscriber_endpoint = 'update-subscriber';
 } else {
-  var url_api = 'https://api2.ecomailapp.cz/tracker/'+encodeUri(data.request_type);
-  var url_api_subscribe = 'https://api2.ecomailapp.cz/lists/'+encodeUri(data.email_list_id)+'/subscribe';
+  var method = 'POST';
+  var subscriber_endpoint = 'subscribe';  
 }
 
 
-//Add email contact to a list as new user
-if (data.email_list_id && (data.request_type == 'only_add_email' || (data.request_type == 'transaction' && data.add_new_email == true))) {
+//When I have use mock server
+if (data.mockServer == true) {
+  var url_api = encodeUri(data.debug_server_url)+'/tracker/'+encodeUri(data.request_type);
+  var url_api_subscribe = encodeUri(data.debug_server_url)+'/lists/'+encodeUri(data.email_list_id)+'/'+encodeUri(subscriber_endpoint);
+} else {
+  var url_api = 'https://api2.ecomailapp.cz/tracker/'+encodeUri(data.request_type);
+  var url_api_subscribe = 'https://api2.ecomailapp.cz/lists/'+encodeUri(data.email_list_id)+'/'+encodeUri(subscriber_endpoint);
+}
 
-  var post_data_subscribe = {   
-    'subscriber_data': {
-      "name": data.user_name,
-      "surname": data.user_surname,
-      "email": data.email,
-      "city": data.user_city,
-      "street": data.user_street,
-      "zip": data.user_zip,
-      "country": data.user_country,
-      "phone": data.user_phone,
-      "source": data.user_source,      
-    },
-      "trigger_autoresponders": data.trigger_autoresponders,
-      "update_existing": data.update_existing,
-      "resubscribe": data.resubscribe
-  };
+
+//Add or edit email contact in a list
+if (data.email_list_id && (data.request_type == 'only_add_email' || (data.request_type == 'transaction' && (data.add_new_email == true || data.update_existing == true)))) {
+
+  if (data.update_existing == true && data.add_new_email == false) {
+    var post_data_subscribe = {   
+      'email': data.email,
+      'subscriber_data': {
+        "name": data.user_name,
+        "surname": data.user_surname,
+        "city": data.user_city,
+        "street": data.user_street,
+        "zip": data.user_zip,
+        "country": data.user_country,
+        "phone": data.user_phone,
+        "source": data.user_source
+      }
+    }; 
+  } else {
+    var post_data_subscribe = {   
+      'subscriber_data': {
+        "name": data.user_name,
+        "email": data.email,
+        "surname": data.user_surname,
+        "city": data.user_city,
+        "street": data.user_street,
+        "zip": data.user_zip,
+        "country": data.user_country,
+        "phone": data.user_phone,
+        "source": data.user_source,      
+      },
+        "trigger_autoresponders": data.trigger_autoresponders,
+        "update_existing": data.update_existing,
+        "resubscribe": data.resubscribe
+    };
+  }
 
   //if debug_mode On, write complete JSON to Console
   if (data.debugMode == true) {
@@ -487,42 +513,41 @@ if (data.email_list_id && (data.request_type == 'only_add_email' || (data.reques
     }));
   }
 
-  
-sendHttpRequest(url_api_subscribe, (statusCode, headers, body) => {
-  if (statusCode >= 200 && statusCode < 300) {
-    if (data.debugMode == true) {
-      logToConsole(JSON.stringify({
-        'Point': 'Ecomail subscribe - Success',
-        'ResponseStatusCode': statusCode,
-        'ResponseHeaders': headers,
-        'ResponseBody': body
-      }));
-    }
-    data.gtmOnSuccess();
-  } else {
-    if (data.debugMode == true) {
-      logToConsole(JSON.stringify({
-        'Point': 'Ecomail subscribe - Failure',
-        'ResponseStatusCode': statusCode,
-        'ResponseHeaders': headers,
-        'ResponseBody': body
-      }));
-    }
-    data.gtmOnFailure(); 
+  sendHttpRequest(url_api_subscribe, (statusCode, headers, body) => {
+    if (statusCode >= 200 && statusCode < 300) {
+      if (data.debugMode == true) {
+        logToConsole(JSON.stringify({
+          'Point': 'Ecomail subscribe - Success',
+          'ResponseStatusCode': statusCode,
+          'ResponseHeaders': headers,
+          'ResponseBody': body
+        }));
+      }
+      data.gtmOnSuccess();
+    } else {
+      if (data.debugMode == true) {
+        logToConsole(JSON.stringify({
+          'Point': 'Ecomail subscribe - Failure',
+          'ResponseStatusCode': statusCode,
+          'ResponseHeaders': headers,
+          'ResponseBody': body
+        }));
+      }
+      data.gtmOnFailure(); 
     
-  }},
-  {
-    headers: {
-      'content-type': 'application/json',
-      'key': data.api_key
-    },
-    method: 'POST', 
-    timeout: 2000
-   },
-   JSON.stringify(post_data_subscribe)
-);
+    }},
+    {
+      headers: {
+        'content-type': 'application/json',
+        'key': data.api_key
+      },
+      method: method, 
+      timeout: 2000
+     },
+     JSON.stringify(post_data_subscribe)
+  );
 
-}
+}//add or edit contact
 
 //Send data to Ecomail about transaction or events
 if (data.request_type == 'transaction' || data.request_type == 'events') {
@@ -626,6 +651,6 @@ scenarios: []
 
 ___NOTES___
 
-Created on 5. 4. 2024 17:06:40
+Created on 31. 3. 2024 22:37:44
 
 
