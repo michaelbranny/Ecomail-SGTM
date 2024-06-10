@@ -44,7 +44,7 @@ ___TEMPLATE_PARAMETERS___
   {
     "type": "CHECKBOX",
     "name": "newsletter_consent",
-    "displayName": "Newsletter consent",
+    "checkboxText": "Newsletter consent",
     "simpleValueType": true
   },
   {
