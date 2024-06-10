@@ -1,2 +1,2 @@
 # Ecomail-SGTM
-Tag for send data mailing system Ecomail 
+Tag for sending data to Ecomail 

@@ -19,7 +19,7 @@ ___INFO___
     "displayName": "",
     "thumbnail": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFoAAAA8CAYAAADmBa1FAAAACXBIWXMAACE4AAAhOAFFljFgAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAOHSURBVHgB7Zw9b9NAHId/d2cndpo0LyWl6VtoRCtVFHVAgs6sfAMW+AYwslE+ASMj9BOxMTBUYmBhshBLX+Lgf1JXbZXm8nL23dl+xigv1qPT+fHdKQwRr7+8/MjDwfsBQwMFymADBAPGvu3uh5/E1++vPvsu/xD8C70wRIFCuIC33GFHfU+ccYR4u94WeLbvwSszFKhBuECrK+DXOSKr73j02nC6qFZYIVsRsWTHu36pwW++wS8XshfFjeSu9MRQ9k343TeS7KMDD81ljoLZ8OsMzWgk8zHqxtp0nNHI3l5zUDAd1QcM9XU+VjIxcdjudUvobbgomEztIUO1PXkGkA7Z3uZI9OnvCxTchkZvbY0Ny0LGVHMDya4tcfw4PcfF5QAFo7Jobt4qi4lMfcdrN4vWjhmTb1JmSouite/PNxkzN1zc2rVK/mRTvq3siHvLYhJzxXIsu90SyAtxvs3L3J+k1j7cLeeitafJNxkLW6LWdgTLZP7RFFHf4ChXF58mlQxHyj8a4T9/nSMrzJpvMpQtaNAUcrhXhuvYf5OcJ99kKF05otZ+fmB3/s2bbzKUL9HZvNS6SL7JSGQt1MbWXjTfZCT2zTa1top8k5Hot8etbepSK00RzS2OpVbymxypPG2YuNSqOt9kpLZfRbLp4cYEksg3GaluDFJr07yts7WTyjcZqe/A0qavrtZOMt9kaNnq1tHaSeebDG2/nGZrp5FvMrT+eiy7004mftLMN+m1QDPU2k966o81xGWhYolTBcas2qts7ViyMOg5yahzXypaW1e+yTDugB219tFTf67W1plvMow8yUjHGmZtbd35JsPYK5ultU3INxlGX118hPi+1qYpotU1I99kGH+FlH8vojn7bmvHZVGyZHPB/KFwxc3W1rH6tihWnX6h/OPRhs1fPzSyLCZh2eUCjzouuhU3EMyuzV/rRBP1Em/sVFyULJJtpWjCEww7S/bItlY04fKRbI+bL9tq0QTJflwtBQ3X7GMN1ou+orHpO1gtmys7K6KHrJbNlZ0p0QTJ3vLMy7/MiSZMzL9MiiZMy7/MiiZMyr9Miyau8g+68y/zomN0519uRBM68y9XogmSve27SDv/cieaWHY50s6/XIom0s4/Eh0gp6SYfwHHgJ0gx8T5t1JK8ibJThwI5xj9S/p/xzdAfv8ys+NFKqKB/eesD4UEJLmPi+P/q6xjuZmK8TsAAAAASUVORK5CYII\u003d"
   },
-  "description": "Send data to ecomail with their API",
+  "description": "Send data to Ecomail via API",
   "containerContexts": [
     "SERVER"
   ]
@@ -51,11 +51,11 @@ ___TEMPLATE_PARAMETERS___
       },
       {
         "value": "only_add_email",
-        "displayValue": "Only add email"
+        "displayValue": "Add only email"
       }
     ],
     "simpleValueType": true,
-    "help": "If use variables, you must have set transaction or events or only_add_email"
+    "help": "You must set transaction, events or only_add_email"
   },
   {
     "type": "TEXT",
@@ -74,7 +74,7 @@ ___TEMPLATE_PARAMETERS___
         "name": "email_list_id",
         "displayName": "ID list",
         "simpleValueType": true,
-        "help": "When I add email to list. I need ID of the list. You can found ID list in ecomail administration."
+        "help": "List ID from Ecomail."
       },
       {
         "type": "TEXT",
@@ -255,13 +255,6 @@ ___TEMPLATE_PARAMETERS___
         "name": "order_shipping",
         "displayName": "Shipping price",
         "simpleValueType": true
-      },
-      {
-        "type": "CHECKBOX",
-        "name": "add_new_email",
-        "checkboxText": "Add new email",
-        "simpleValueType": true,
-        "help": "If you select true, I add the e-mail as new user into ecomail system. I recomnded."
       }
     ]
   },
@@ -276,7 +269,7 @@ ___TEMPLATE_PARAMETERS___
         "name": "items",
         "displayName": "Items (for transaction and cart)",
         "simpleValueType": true,
-        "help": "I need array items in GA4 format"
+        "help": "Array of items in GA4 format"
       },
       {
         "type": "TEXT",
@@ -302,7 +295,7 @@ ___TEMPLATE_PARAMETERS___
         "isUnique": true
       }
     ],
-    "help": "In transactions join this params into param name tags. In event cart join this params into param name descriptions."
+    "help": "In transactions join this into param name tags. In event cart join this into param name descriptions."
   },
   {
     "type": "GROUP",
@@ -344,17 +337,17 @@ const getTimestamp = require('getTimestamp');
 const createRegex = require('createRegex');
 const testRegex = require('testRegex');
 
-//Check IF I have an email in input data. 
+//Check if there is an email in input data.
 const emailRegex = createRegex('@', 'i');
 if (emailRegex === null) return;
 if (testRegex(emailRegex, data.email) === false) {
-  data.gtmOnFailure(); 
+  data.gtmOnFailure();
   return ;
 }
 
 //Setup basic array for POST request to Ecomail
 if (data.request_type == 'transaction') {
-  var post_data = {   
+  var post_data = {
     'transaction': {
       'order_id': data.order_id,
       'email': data.email,
@@ -368,7 +361,7 @@ if (data.request_type == 'transaction') {
     },
     'transaction_items': []
   };
-} else if (data.request_type == 'events') {  
+} else if (data.request_type == 'events') {
   var post_data = {
     'event': {
       'email': data.email,
@@ -376,14 +369,14 @@ if (data.request_type == 'transaction') {
       'action': data.event_action,
       'label': data.event_label,
       'property': data.event_property,
-      'value': data.event_value,    
+      'value': data.event_value,
     }
   };
 }
 
-//If I recognize than user wants event "Add to cart" I set value to special format for this situation. And I transform items from GA4 format to especialy format fro ecomail events.
+// For "Add to cart" set the value to special format for this situation and transform items from GA4 format to format for Ecomail events.
 if (data.event_action == 'Basket' && data.event_label == 'Basket' && typeof data.items != 'undefined') {
-  var cart_event_value = { 
+  var cart_event_value = {
     data: {
       data: {
         action: 'Basket',
@@ -391,75 +384,76 @@ if (data.event_action == 'Basket' && data.event_label == 'Basket' && typeof data
       }
     }
   };
-  data.items.forEach(function(produkt, index) {
+  data.items.forEach(function(product, index) {
     cart_event_value.data.data.products[index] = {
-      'productId': produkt.item_id,
-      'img_url': produkt.image_url,
-      'url': produkt.url,
-      'name': produkt.item_name,
-      'price': produkt[data.items_price]
+      'productId': product.item_id,
+      'img_url': product.image_url,
+      'url': product.url,
+      'name': product.item_name,
+      'price': product[data.items_price]
     } ;
+
     //Add parameters to event name tags
     var product_params_to_description = [];
     if (typeof data.params_to_tags != 'undefined') {
       data.params_to_tags.forEach(function(param_column, param_index) {
-        if (produkt[param_column.param_name]) {
-          product_params_to_description[param_index] = produkt[param_column.param_name];
+        if (product[param_column.param_name]) {
+          product_params_to_description[param_index] = product[param_column.param_name];
         }
       });
       cart_event_value.data.data.products[index].description = product_params_to_description;
     }
-    
+
   });
-  
+
   post_data.event.value = JSON.stringify(cart_event_value);
 }
 
-//Convert products from GA4 format to ecomail format and insert into POST request. If products exists.
+// Convert products from GA4 format to Ecomail format and insert it into POST request.
 if (data.request_type == 'transaction' && typeof data.items != 'undefined') {
   var categoryKeys = ['item_category', 'item_category2', 'item_category3', 'item_category4', 'item_category5'];
-  
-  data.items.forEach(function(produkt, index) {
+
+  data.items.forEach(function(product, index) {
     var combinedCategories = [];
     for (const key of categoryKeys) {
-      if (produkt[key]) {
-        combinedCategories.push(produkt[key]);
+      if (product[key]) {
+        combinedCategories.push(product[key]);
       }
     }
     post_data.transaction_items[index] = {
-      'code': produkt.item_id,
-      'title': produkt.item_name,
+      'code': product.item_id,
+      'title': product.item_name,
       'category': combinedCategories.join(' | '),
-      'price': produkt[data.items_price],
-      'amount': produkt.quantity
+      'price': product[data.items_price],
+      'amount': product.quantity
     } ;
-    
-    
-    //Add parameters to event name tags
+
+
+    // Add parameters to event name tags
     var product_params_to_tags = [];
     if (typeof data.params_to_tags != 'undefined') {
       data.params_to_tags.forEach(function(param_column, param_index) {
-        if (produkt[param_column.param_name]) {
-          product_params_to_tags[param_index] = produkt[param_column.param_name];
+        if (product[param_column.param_name]) {
+          product_params_to_tags[param_index] = product[param_column.param_name];
         }
       });
       post_data.transaction_items[index].tags = product_params_to_tags;
     }
-    
+
   });
 }
 
-//SetUp method and URL to subscribers. 
-if (data.update_existing == true && data.add_new_email == false) {
+// Set up method and URL to subscribers.
+if (data.update_existing == true) {
   var method = 'PUT';
   var subscriber_endpoint = 'update-subscriber';
 } else {
   var method = 'POST';
-  var subscriber_endpoint = 'subscribe';  
+  var subscriber_endpoint = 'subscribe';
 }
 
 
-//When I have use mock server
+// When using mock server
 if (data.mockServer == true) {
   var url_api = encodeUri(data.debug_server_url)+'/tracker/'+encodeUri(data.request_type);
   var url_api_subscribe = encodeUri(data.debug_server_url)+'/lists/'+encodeUri(data.email_list_id)+'/'+encodeUri(subscriber_endpoint);
@@ -469,11 +463,10 @@ if (data.mockServer == true) {
 }
 
 
-//Add or edit email contact in a list
-if (data.email_list_id && (data.request_type == 'only_add_email' || (data.request_type == 'transaction' && (data.add_new_email == true || data.update_existing == true)))) {
-
-  if (data.update_existing == true && data.add_new_email == false) {
-    var post_data_subscribe = {   
+// Add or edit email contact in the list
+if (data.email_list_id && (data.request_type == 'only_add_email' || (data.request_type == 'transaction' && data.update_existing == true))) {
+  if (data.update_existing == true) {
+    var post_data_subscribe = {
       'email': data.email,
       'subscriber_data': {
         "name": data.user_name,
@@ -485,9 +478,9 @@ if (data.email_list_id && (data.request_type == 'only_add_email' || (data.reques
         "phone": data.user_phone,
         "source": data.user_source
       }
-    }; 
+    };
   } else {
-    var post_data_subscribe = {   
+    var post_data_subscribe = {
       'subscriber_data': {
         "name": data.user_name,
         "email": data.email,
@@ -497,7 +490,7 @@ if (data.email_list_id && (data.request_type == 'only_add_email' || (data.reques
         "zip": data.user_zip,
         "country": data.user_country,
         "phone": data.user_phone,
-        "source": data.user_source,      
+        "source": data.user_source,
       },
         "trigger_autoresponders": data.trigger_autoresponders,
         "update_existing": data.update_existing,
@@ -505,7 +498,7 @@ if (data.email_list_id && (data.request_type == 'only_add_email' || (data.reques
     };
   }
 
-  //if debug_mode On, write complete JSON to Console
+  //if debug_mode is on, write complete JSON to console
   if (data.debugMode == true) {
     logToConsole(JSON.stringify({
       'Point': 'Ecomail - POST data subscribe',
@@ -533,34 +526,34 @@ if (data.email_list_id && (data.request_type == 'only_add_email' || (data.reques
           'ResponseBody': body
         }));
       }
-      data.gtmOnFailure(); 
-    
+      data.gtmOnFailure();
+
     }},
     {
       headers: {
         'content-type': 'application/json',
         'key': data.api_key
       },
-      method: method, 
+      method: method,
       timeout: 2000
      },
      JSON.stringify(post_data_subscribe)
   );
 
-}//add or edit contact
+}// add or edit contact
 
-//Send data to Ecomail about transaction or events
+// Send transaction or event data to Ecomail
 if (data.request_type == 'transaction' || data.request_type == 'events') {
 
-  //if debug_mode On, write complete JSON to Console
+  // if debug_mode is on, write complete JSON to Console
   if (data.debugMode == true) {
     logToConsole(JSON.stringify({
       'Point': 'Ecomail - POST data',
       'POST data': post_data
     }));
   }
-  
-  
+
+
   sendHttpRequest(url_api, (statusCode, headers, body) => {
     if (statusCode >= 200 && statusCode < 300) {
       if (data.debugMode == true) {
@@ -581,14 +574,14 @@ if (data.request_type == 'transaction' || data.request_type == 'events') {
           'ResponseBody': body
         }));
       }
-      data.gtmOnFailure(); 
+      data.gtmOnFailure();
     }},
     {
       headers: {
         'content-type': 'application/json',
         'key': data.api_key
       },
-      method: 'POST', 
+      method: 'POST',
       timeout: 2000
      },
      JSON.stringify(post_data)
