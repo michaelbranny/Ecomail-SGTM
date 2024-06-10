@@ -36,6 +36,18 @@ ___TEMPLATE_PARAMETERS___
     "simpleValueType": true
   },
   {
+    "type": "TEXT",
+    "name": "integration_name",
+    "displayName": "Integration name",
+    "simpleValueType": true
+  },
+  {
+    "type": "CHECKBOX",
+    "name": "newsletter_consent",
+    "displayName": "Newsletter consent",
+    "simpleValueType": true
+  },
+  {
     "type": "SELECT",
     "name": "request_type",
     "displayName": "Request type",
@@ -465,6 +477,12 @@ if (data.mockServer == true) {
 
 // Add or edit email contact in the list
 if (data.email_list_id && (data.request_type == 'only_add_email' || (data.request_type == 'transaction' && data.update_existing == true))) {
+  var tags = [data.integration_name];
+
+  if(data.newsletter_consent) {
+    tags.push(data.integration_name + '_newsletter');
+  }
+
   if (data.update_existing == true) {
     var post_data_subscribe = {
       'email': data.email,
@@ -476,7 +494,8 @@ if (data.email_list_id && (data.request_type == 'only_add_email' || (data.reques
         "zip": data.user_zip,
         "country": data.user_country,
         "phone": data.user_phone,
-        "source": data.user_source
+        "source": data.user_source,
+        "tags": tags,
       }
     };
   } else {
@@ -491,6 +510,7 @@ if (data.email_list_id && (data.request_type == 'only_add_email' || (data.reques
         "country": data.user_country,
         "phone": data.user_phone,
         "source": data.user_source,
+        "tags": tags,
       },
         "trigger_autoresponders": data.trigger_autoresponders,
         "update_existing": data.update_existing,
