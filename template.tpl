@@ -71,9 +71,10 @@ ___TEMPLATE_PARAMETERS___
   },
   {
     "type": "TEXT",
-    "name": "email",
-    "displayName": "User e-mail",
-    "simpleValueType": true
+    "name": "email_list_id",
+    "displayName": "ID list",
+    "simpleValueType": true,
+    "help": "List ID from Ecomail."
   },
   {
     "type": "GROUP",
@@ -83,10 +84,9 @@ ___TEMPLATE_PARAMETERS___
     "subParams": [
       {
         "type": "TEXT",
-        "name": "email_list_id",
-        "displayName": "ID list",
-        "simpleValueType": true,
-        "help": "List ID from Ecomail."
+        "name": "email",
+        "displayName": "User e-mail",
+        "simpleValueType": true
       },
       {
         "type": "TEXT",
