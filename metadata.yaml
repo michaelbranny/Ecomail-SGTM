@@ -1,5 +1,5 @@
 homepage: "https://ecomail.cz"
 documentation: "https://github.com/michaelbranny/Ecomail-SGTM/blob/main/template.tpl"
 versions:
-  - sha:b2d3f2335f31b47e321bbf1ff1793961fca0edca
-    changeNotes:Change order of params
+  - sha:c7eee35900a41206f0658a00a475cd0b3119d588
+    changeNotes:Add categories
